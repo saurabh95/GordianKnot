@@ -1,0 +1,172 @@
+<html>
+<head>
+<title>Gordion-Knot</title>
+<?php include_once 'includer.php'; ?>
+<link href="styles/bootstrap.min.css" rel="stylesheet"> 
+<script src="js/tabs.min.js"></script>
+<script>
+$(document).ready(function() {
+	$('a[href=#tab2]').click();
+	$('a[href=#tab1]').click();
+});
+</script>
+<style>
+.tab-pane > a,
+.tab-pane > span{
+	display: block;
+	font-size: 1.5em;
+	line-height: 2em;
+}
+</style>
+</head>
+<body>
+
+<?php include_once 'masthead.php'; ?>
+<h1>Dashboard</h1>
+    <div class="tabbable tabs-left">
+	
+    	<ul class="nav nav-tabs">
+    		<li class="active"><a href="#tab1" data-toggle="tab">Level 1</a></li>
+    		<li><a href="#tab2" data-toggle="tab">Level 2</a></li>
+		</ul>
+		<div class="tab-content">
+		
+		<div class="tab-pane active fade" id="tab1">
+				<h2>Level 1</h2>
+				<a href="?qlevel=1&qno=1">Question 1</a>
+				<a href="?qlevel=1&qno=2">Question 2</a>
+				<a href="?qlevel=1&qno=3">Question 3</a>
+				<a href="?qlevel=1&qno=4">Question 4</a>
+				<a href="?qlevel=1&qno=5">Question 5</a>
+			</div>
+
+		
+		<div class="tab-pane active fade" id="tab2">
+				<h2>Level 2</h2>
+				<a href="?qlevel=2&qno=1">Question 1</a>
+				<a href="?qlevel=2&qno=2">Question 2</a>
+				<a href="?qlevel=2&qno=3">Question 3</a>
+				<span>Question 4</span>
+				<span>Question 5</span>
+			</div>
+			<div class="tab-pane fade" id="tab2">
+				<h2>Level 2</h2>
+			</div>
+		</div>
+
+	</div>
+
+
+<?php
+include_once 'vlogin.php';
+session_start();
+/*if(!isset($_SESSION['username']))
+{
+ header('Location: index.html');
+}*/
+if($logged_in!=true)
+{
+	header('Location: index.php');
+}
+else
+{
+//	echo $user."is logged in";
+}
+//$username=$_SESSION['username'];
+$username=$user;
+$hostname_localhost ="localhost";
+$database_localhost ="gordian_beta";
+$username_localhost ="gordian_beta";
+$password_localhost ="gordianknot!@#";
+$con = mysql_connect($hostname_localhost,$username_localhost,$password_localhost)
+or
+trigger_error(mysql_error(),E_USER_ERROR);
+mysql_select_db($database_localhost, $con);
+$solved=array();
+$level=1;
+for($level=1;$level<=5;$level++)
+{
+$query_search="select * from qsolved where sbyuser='".$user."' and qlevel=".$level.";";
+$query_exec = mysql_query($query_search) or die(mysql_error());
+$rows=mysql_num_rows($query_exec);
+//echo $rows;
+$solved[$level]=$rows;
+}
+for($level=1;$level<=5;$level++)
+{
+//echo "<div id='s".$level."'>".$solved[$level]."</div>"; //do it hidden while using jquery 
+//echo "<br/>";
+}
+?>
+
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<div id="output">
+<?php
+if(!isset($_GET['qlevel']))   {
+	echo "<center><h2>Click on the level you want to start with</h2></center>";
+}
+else {	
+	echo "<div id='menu' style='height:100%;width:20%;float:left;'>";
+	echo "<form id='form2' method='get' action='' name='form2'>";
+	echo  "<input type='hidden' name='qlevel' value='".$_GET['qlevel']."'/>";
+	for($i=1;$i<=5;$i++)     {
+		echo "<button name='qno' value=$i>Question $i</button><br/>";
+	}
+	echo "</form>";
+	echo "</div>";
+	if(!isset($_GET['qno'])) {
+                echo "Welcome to Level : ".$_GET['qlevel']."<br/>";
+                echo "The Description about the Level<br/>";
+                echo "Please select a Question !";
+        }
+	else    {
+		require 'ShowComments.php';
+		require 'ShowQues.php';
+		echo "<b>Question No : ".$_GET['qno']."</b><br/>"."Description of Question";
+		$question=new showques();
+		$question->show($_GET['qno'],$_GET['qlevel']);
+		if(isset($_GET['check'])){
+                                if((int)$_GET['check']==0){
+                                        echo "<br><b>Wrong Answer</b><br>";        
+                                }
+				else
+					echo "<br><b>Correct Answer</b><br>";
+                        }
+		$query_search="select * from qsolved where sbyuser='".$user."' and qlevel='".$_GET['qlevel']."' and qno='".$_GET['qno']."';";
+		//echo $query_search;
+		$query_exec = mysql_query($query_search) or die(mysql_error());
+		$rows=mysql_num_rows($query_exec);
+		if((int)$rows==1)
+			echo "<b>You have already solved the Question</b><br/><br/>";
+		else {
+			echo "<form id='form3' name='form3' method='post' action='checkcorrect.php'>";
+			echo "<input type='text' name='ans' placeholder='Enter your answer here'>";
+			echo "<input type='hidden' name='qno' value='".$_GET['qno']."'>".
+                        	"<input type='hidden' name='qlevel' value='".$_GET['qlevel']."'>";
+			echo "<input type='hidden' name='purl' value='".$_SERVER['REQUEST_URI']."'/>";
+			echo "<br/><input type=\"submit\" value=\"Submit\"><br/></div>";
+			echo "</form>";
+		}
+		$comments=new ShowComments();
+		$comments->show($_GET['qno'],$_GET['qlevel']);
+		echo "<br/><br/><b>Add Comment</b>";
+		echo "<form action='comments.php' id='form2' name='form2' method='post'>".
+			"<input type='hidden' name='qno' value='".$_GET['qno']."'>".
+			"<input type='hidden' name='qlevel' value='".$_GET['qlevel']."'>";
+		echo "<input type='hidden' name='purl' value='".$_SERVER['REQUEST_URI']."'/>";
+		echo "<textarea name='cstring' placeholder='Add Comment here' rows='4' cols='50'></textarea>";
+		echo "<br/><button>Submit</button>";
+		echo "</form>";
+	}
+}
+?>
+</div>
+</body>
+</html>
